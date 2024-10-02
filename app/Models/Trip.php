@@ -9,6 +9,7 @@ class Trip extends Model
 {
     use HasFactory;
     protected $guarded = [];
+
     public function children()
     {
         return $this->belongsToMany(Child::class, 'trip_child');
@@ -16,5 +17,10 @@ class Trip extends Model
     public function group()
     {
         return $this->belongsTo(Group::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
     }
 }

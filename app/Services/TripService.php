@@ -8,7 +8,7 @@ use App\Models\SchoolClass;
 use App\Models\SchoolHoliday;
 use App\Models\SchoolSemster;
 use App\Models\OfficialHoliday;
-
+use App\Models\Trip;
 class TripService
 {
     /**
@@ -135,5 +135,37 @@ class TripService
         return $futureWeeklyTrips;
     }
 
+    public function storeTrip($group, $status)
+    {
 
+        try {
+            // Validate the group and status
+            if (!$group || !$status) {
+                throw new \Exception('Invalid group or status');
+            }
+
+            // Validate the driver_id
+            if (!$group->driver_id) {
+                throw new \Exception('Invalid driver_id');
+            }
+
+            $trip = Trip::create([
+                'group_id' => $group->id,
+                'status' => $status,
+                'driver_id' => $group->driver_id,
+                'trip_date' => Carbon::now()->toDateString(),
+                'time' => Carbon::now()->toTimeString(),
+                'description' => 'Trip description', // Add a default description
+                'trip_type' => 'morning', // Add a default trip type
+                'in_exam_period' => false, // Add a default value for in_exam_period
+                'school_class_id' => $group->school_class_id, // Add school_class_id
+            ]);
+
+        } catch (\Exception $e) {
+            // Handle the exception
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+        return $trip;
+    }
 }

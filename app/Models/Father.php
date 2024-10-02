@@ -36,6 +36,7 @@ class Father extends Authenticatable implements JWTSubject
     {
         return $this->belongsToMany(Child::class, 'father_children');
     }
+
     // public function invoices()
     // {
     //     return $this->hasMany(SubscriptionInvoice::class, 'user_id');

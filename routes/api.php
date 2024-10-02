@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TripApiController;
 use App\Http\Controllers\Api\SchoolApiController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\TripController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,7 +44,7 @@ Route::prefix('father')->group(function () {
         Route::get('subscription/overview', [SubscriptionController::class, 'subscriptionOverview']);
         Route::get('subscription/plans', [SubscriptionController::class, 'subscriptionPlans']);
         Route::post('subscription/{plan_id}', [SubscriptionController::class, 'setSubscription']);
-        
+
         // payment
         Route::post('/initiate-payment', [PaymentController::class, 'initiatePayment']);
         Route::post('/handle-response', [PaymentController::class, 'handleResponse']);
@@ -68,9 +69,12 @@ Route::prefix('driver')->group(function () {
     Route::middleware('auth:driver')->group(function () {
         Route::get('me', [AuthController::class, 'meDriver']);
         Route::post('logout', [AuthController::class, 'logoutDriver']);
-        
+
         // get group data
         Route::get('/group/{id}', [TripApiController::class, 'getGroupsForDriver']);
+
+        // update trip status
+        Route::post('/trip/{group_id}/update-status/{status}', [TripApiController::class, 'updateTripStatus']);
 
         // trips
         Route::get('/{driverId}/trips', [TripApiController::class, 'getDriverTrips']);

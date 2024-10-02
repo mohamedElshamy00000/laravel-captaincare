@@ -10,7 +10,7 @@ class Child extends Model
     use HasFactory;
 
     protected $guarded = [];
-    
+
     public function fathers()
     {
         return $this->belongsToMany(Father::class, 'father_children');
@@ -32,7 +32,7 @@ class Child extends Model
     {
         return $this->belongsToMany(Group::class, 'group_children')->withPivot('status');
     }
-    
+
     public function groupChildren()
     {
         return $this->hasMany(GroupChildren::class);

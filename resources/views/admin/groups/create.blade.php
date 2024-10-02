@@ -3,20 +3,10 @@
 @section('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 
-
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <!-- Leaflet JavaScript -->
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" crossorigin='' />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-
-    <link rel='stylesheet' href='https://unpkg.com/leaflet@1.8.0/dist/leaflet.css' crossorigin='' />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-
-
 @endsection
 
 @section('content')
@@ -62,17 +52,6 @@
                         </span>
                         @enderror
                     </div>
-
-
-                    {{-- <div class="mb-3 ajax-select mt-3 mt-lg-0 col-md-3">
-                        <label class="form-label">Group classes</label>
-                        <select class="form-control select2-ajax-classes" name="classes"></select>
-                        @error('classes')
-                        <span class="invalid-feedback" group="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                        @enderror
-                    </div> --}}
 
                     <div class="mb-3 ajax-select mt-3 mt-lg-0 col-md-6">
                         <label class="form-label">Group Childrens</label>
@@ -120,26 +99,14 @@
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-
 <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
-{{--<!-- Leaflet Control Geocoder plugin -->--}}
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-
-<!-- Leaflet Routing Machine JavaScript -->
-<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
 <script>
 
 $(document).ready(function () {
     var map = L.map('map').setView([31.4178, 31.8147], 10); // Centered on Egypt New Damietta City
-
-    // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    //     attribution: '© OpenStreetMap contributors'
-    // }).addTo(map);
-
 
     function changeMapStyle(style) {
         L.tileLayer(style, {
@@ -196,7 +163,6 @@ $(document).ready(function () {
         templateSelection: function (school) {
             if (school.id) {
                 updateMapMarkers(school.latitude, school.longitude);
-                // loadclasses(school.id);
                 loadChildren(school.id);
 
             }

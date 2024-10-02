@@ -13,6 +13,11 @@ use App\Http\Controllers\Controller;
 use App\Models\OfficialHoliday;
 use App\Models\SchoolHoliday;
 use App\Services\TripService;
+use App\Notifications\TripStartedNotification;
+use App\Notifications\TripEndedNotification;
+use App\Events\TripStarted;
+use App\Events\TripEnded;
+use App\Models\Trip;
 
 class TripApiController extends Controller
 {
@@ -63,19 +68,19 @@ class TripApiController extends Controller
             $currentDate = Carbon::now();
             $schoolIds = $groups->pluck('school.id')->unique();
             $semesters = SchoolSemster::whereIn('school_id', $schoolIds)->get();
-            
+
             // تنسيق النتائج
             $plannedTrips = $groups->map(function ($group) use ($currentDate, $semesters) {
                 // تحديد الفصول الدراسية التي تنطبق على التاريخ الحالي
                 $currentSemesters = $semesters->filter(function ($semester) use ($currentDate) {
-                    return $currentDate->between($semester->study_start, $semester->study_end) || 
+                    return $currentDate->between($semester->study_start, $semester->study_end) ||
                         $currentDate->between($semester->exam_start, $semester->exam_end);
                 });
-            
+
                 // التحقق من وجود فصل دراسي مناسب
                 $isInAnySemester = $currentSemesters->isNotEmpty();
                 $schoolClass = $group->schoolClass;
-            
+
                 // التحقق من فترة الامتحانات بناءً على الفصول الدراسية الحالية
                 $inExamPeriod = $currentSemesters->contains(function ($semester) use ($currentDate) {
                     return $currentDate->between($semester->exam_start, $semester->exam_end);
@@ -94,7 +99,7 @@ class TripApiController extends Controller
                     'in_exam_period' => $inExamPeriod,
                     'trips' => $futureTrips,
                 ];
-                        
+
                 return $groupDetails;
             });
 
@@ -131,19 +136,19 @@ class TripApiController extends Controller
         $currentDate = Carbon::now();
         $schoolIds = $groups->pluck('school.id')->unique();
         $semesters = SchoolSemster::whereIn('school_id', $schoolIds)->get();
-        
+
         // تنسيق النتائج
         $plannedTrips = $groups->map(function ($group) use ($currentDate, $semesters) {
             // تحديد الفصول الدراسية التي تنطبق على التاريخ الحالي
             $currentSemesters = $semesters->filter(function ($semester) use ($currentDate) {
-                return $currentDate->between($semester->study_start, $semester->study_end) || 
+                return $currentDate->between($semester->study_start, $semester->study_end) ||
                        $currentDate->between($semester->exam_start, $semester->exam_end);
             });
-        
+
             // التحقق من وجود فصل دراسي مناسب
             $isInAnySemester = $currentSemesters->isNotEmpty();
             $schoolClass = $group->schoolClass;
-        
+
             // التحقق من فترة الامتحانات بناءً على الفصول الدراسية الحالية
             $inExamPeriod = $currentSemesters->contains(function ($semester) use ($currentDate) {
                 return $currentDate->between($semester->exam_start, $semester->exam_end);
@@ -162,10 +167,10 @@ class TripApiController extends Controller
                 'in_exam_period' => $inExamPeriod,
                 'trips' => $futureTrips,
             ];
-                    
+
             return $groupDetails;
         });
-        
+
 
         return response()->json($plannedTrips, 200);
     }
@@ -207,7 +212,49 @@ class TripApiController extends Controller
             'status' => $group->status,
             'waypoints' => json_decode($group->waypoints, true),
         ];
-            
+
         return response()->json($groupData, 200);
+    }
+
+    public function updateTripStatus($group_id, $status)
+    {
+        // dd($group_id, $status);
+        // Get the authenticated driver
+        $driver = auth()->guard('driver')->user();
+
+        if (!$driver) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Retrieve the group associated with the authenticated driver
+        $group = Group::where('id', $group_id)->first();
+
+        if (!$group) {
+            return response()->json(['message' => 'No group found'], 404);
+        }
+
+        // Store the trip before updating the status
+        if ($status == 'started') {
+            $trip = $this->tripService->storeTrip($group, $status);
+        } else {
+            
+        }
+
+        // Notify parents
+        foreach ($group->children as $child) {
+            $parent = $child->parent;
+            if ($parent) {
+                // Send notification to parent
+                if ($status == 'started') {
+                    event(new TripStarted($child));
+                    $parent->notify(new TripStartedNotification($child));
+                } elseif ($status == 'completed') {
+                    event(new TripEnded($child));
+                    $parent->notify(new TripEndedNotification($child));
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Trip status updated successfully', 'trip' => $trip], 200);
     }
 }

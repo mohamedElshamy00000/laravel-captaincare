@@ -179,6 +179,7 @@
                     <ul class="sub-menu" aria-expanded="true">
                         <li><a href="{{ route('admin.groups.index') }}" class="{{ (request()->is('admin/groups')) ? 'active' : '' }}" key="t-light-sidebar">All Groups</a></li>
                         <li><a href="{{ route('admin.groups.create') }}" class="{{ (request()->is('admin/groups')) ? 'active' : '' }}" key="t-compact-sidebar">Groups Create</a></li>
+                        <li><a href="{{ route('admin.trips.index') }}" class="{{ (request()->is('admin/trips')) ? 'active' : '' }}" key="t-compact-sidebar">Trips</a></li>
                     </ul>
                 </li>
 

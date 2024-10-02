@@ -105,7 +105,7 @@
     </div>
     <div class="card-body">
         <div class="">
-    
+
             <div class="table-responsive">
                 <table class="table align-middle table-nowrap table-hover mb-0">
                     <thead>
@@ -136,13 +136,12 @@
                             </td>
                             <td>
                                 <div class="text-dark fw-medium d-flex">
-                                    
                                     <div>
                                         <h6 class=" mb-0">{{ $child->fathers->first()->name }}</h6>
-                                        <p class="text-muted mb-0">{{ $child->fathers->first()->phone }}</p>    
+                                        <p class="text-muted mb-0">{{ $child->fathers->first()->phone }}</p>
                                     </div>
                                 </div>
-                            
+
                             </td>
                             <td>{{ $child->age }} Year's</td>
                             <td>
@@ -156,8 +155,8 @@
                             </td>
                         </tr>
                         @endforeach
-                       
-                        
+
+
                     </tbody>
                 </table>
             </div>

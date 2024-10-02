@@ -23,9 +23,9 @@ class GroupController extends Controller
 
     function show($id) {
         $group = Group::where('id', $id)->first();
-        $children = Child::where('school_id', $group->school->id)->get();
+        $children = Child::where('school_id', $group->school->id)->with('fathers')->get();
         if ($group) {
-            $myDriver = $group->driver;    
+            $myDriver = $group->driver;
             return view('admin.groups.show', compact('group','myDriver','children'));
         } else{
             flash()->addError('fail!');
@@ -111,9 +111,9 @@ class GroupController extends Controller
             })
             ->make(true);
     }
-    
+
     function createGroup() {
-        abort_if(Gate::denies('group_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        // abort_if(Gate::denies('group_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $drivers  = Driver::all();
         $myDriver = Driver::first();
         return view('admin.groups.create', compact('drivers','myDriver'));
@@ -161,8 +161,8 @@ class GroupController extends Controller
             'school_id' => 'required',
         ]);
 
-        try {
-            DB::beginTransaction();
+        // try {
+        //     DB::beginTransaction();
 
             $group = new Group();
 
@@ -170,28 +170,28 @@ class GroupController extends Controller
             $group->description = $request->description;
             $group->driver_id = $request->driver;
             $group->school_id = $request->school_id;
-            $group->waypoints = $request->waypoints ?? '';
+            $group->waypoints = $request->waypoints ?: null; // تعديل هنا
             if ($group->save()) {
                 foreach ($request->childrens as $childId) {
                     $group->children()->attach($childId);
                 }
 
-                DB::commit();
+                // DB::commit();
                 flash()->addSuccess('Group created successfully.');
                 return redirect()->route('admin.groups.index');
             }
-            
-            DB::commit();
+
+            // DB::commit();
 
             flash()->addError('Group create fail!');
             return redirect()->route('admin.groups.index');
 
-            
-        } catch (\Exception $ex) {
-            DB::rollback();
-            flash()->addError('Group create fail!');
-            return redirect()->back();
-        }
+
+        // } catch (\Exception $ex) {
+        //     DB::rollback();
+        //     flash()->addError('Group create fail!');
+        //     return redirect()->back();
+        // }
 
     }
 
@@ -238,5 +238,5 @@ class GroupController extends Controller
         }
         return redirect(Response::HTTP_FORBIDDEN, '403 Forbidden');
     }
-    
+
 }

@@ -14,13 +14,17 @@ return new class extends Migration
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
             $table->date('trip_date');
+            $table->time('time');
             $table->longText('description');
             $table->foreignId('driver_id')->constrained()->onDelete('cascade');
-            $table->string('status')->nullable();
+            $table->enum('status', ['started', 'in_progress', 'completed'])->default('started');
             $table->enum('trip_type', ['morning', 'afternoon']);
             $table->timestamps();
             $table->unsignedBigInteger('group_id')->nullable();
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            $table->boolean('in_exam_period')->default(false);
+            $table->unsignedBigInteger('school_class_id')->nullable();
+            $table->foreign('school_class_id')->references('id')->on('school_classes')->onDelete('cascade');
 
         });
     }

@@ -260,3 +260,10 @@ Breadcrumbs::for('admin.children.edit', function (BreadcrumbTrail $trail): void 
     $trail->parent('admin.index');
     $trail->push('Edit children');
 });
+
+
+// trips
+Breadcrumbs::for('admin.trips.index', function (BreadcrumbTrail $trail): void {
+    $trail->parent('admin.index');
+    $trail->push('Trips');
+});

@@ -20,7 +20,7 @@ use App\Http\Controllers\Client\TestPaymentController;
 use App\Http\Controllers\Admin\SchoolClassesController;
 use App\Http\Controllers\Admin\SchoolSemsterController;
 use App\Http\Controllers\Admin\InvoicesController;
-
+use App\Http\Controllers\Admin\TripController;
 Auth::routes();
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth']], function () {
@@ -161,6 +161,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth']], 
 
         // });
     });
+
+    // trips
+    Route::get('/trips', [TripController::class, 'index'])->name('trips.index');
+    Route::get('/trips/get-trips', [TripController::class, 'getTrips'])->name('trips.get');
+
 
     // for test
     Route::get('/payment', [TestPaymentController::class, 'showPaymentForm'])->name('payment.form'); // for test
