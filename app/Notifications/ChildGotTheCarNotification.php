@@ -29,6 +29,7 @@ class ChildGotTheCarNotification extends Notification
         return [
             'message' => "طفلك {$this->child->name} قد وصل السيارة",
             'child_id' => $this->child->id,
+            'father_id' => $this->child->fathers->first()->id,
             'type' => 'child_got_in_car'
         ];
     }

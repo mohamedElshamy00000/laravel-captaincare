@@ -307,8 +307,10 @@ class TripController extends Controller
         // Notify parent
         $parent = $child->fathers->first();
         if ($parent) {
+
             broadcast(new ChildGotInCarEvent($parent, $child));
             $parent->notify(new ChildGotTheCarNotification($child));
+
         }
 
         return response()->json([
