@@ -7,28 +7,33 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
-
+use App\Models\Child;
+use Illuminate\Broadcasting\PrivateChannel;
 class TripStarted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $child;
-
-    public function __construct($child)
+    /**
+     * Create a new event instance.
+     *
+     * @param Child $child
+     */
+    public function __construct(private Child $child)
     {
-        $this->child = $child;
     }
 
     public function broadcastOn()
     {
-        return new Channel('trips');
+        return new PrivateChannel('started_trip_father.' . $this->child->fathers()->first()->id);
     }
 
     public function broadcastWith()
     {
         return [
-            'message' => 'The trip for your child ' . $this->child->name . ' has started.',
+            'message' => 'تم بدء رحلة الطفل ' . $this->child->name,
             'child_id' => $this->child->id,
+            'child_name' => $this->child->name,
+            'father_id' => $this->child->fathers()->first()->id,
         ];
     }
 }

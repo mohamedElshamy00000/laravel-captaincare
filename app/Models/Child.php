@@ -24,6 +24,11 @@ class Child extends Model
         return $this->belongsTo(SchoolClass::class, 'school_class_id');
     }
 
+    public function monthlyPrices()
+    {
+        return $this->hasMany(ChildMonthlyPrice::class);
+    }
+
     // public function groups()
     // {
     //     return $this->belongsToMany(Group::class, 'group_child');

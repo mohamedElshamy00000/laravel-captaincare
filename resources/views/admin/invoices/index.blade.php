@@ -20,14 +20,15 @@
             <table class="invoice-list-table table border-top dataTable no-footer dtr-column" id="invoices-table">
                 <thead>
                     <tr>
-                        <th>Transaction ID</th>
+                        <th>ID</th>
                         <th>Plan</th>
                         <th>User</th>
                         <th>Child</th>
                         <th>Amount</th>
                         <th>Due Date</th>
                         <th>Status</th>
-                        <th>payment Way</th>
+                        <th>Transaction ID</th>
+                        <th>Payment Way</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -55,6 +56,7 @@
                     { data: 'amount', name: 'amount' },
                     { data: 'due_date', name: 'due_date' },
                     { data: 'status', name: 'status' },
+                    { data: 'transaction_id', name: 'transaction_id' },
                     { data: 'payment_way', name: 'payment_way' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ]

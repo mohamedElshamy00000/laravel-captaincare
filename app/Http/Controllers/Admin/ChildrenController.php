@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Child;
+use App\Models\ChildMonthlyPrice;
+use Carbon\Carbon;
 
 class ChildrenController extends Controller
 {
@@ -75,6 +77,23 @@ class ChildrenController extends Controller
         $child->update($validatedData);
 
         return redirect()->back()->with('success', 'Child data updated successfully');
+    }
+
+    public function storePrice(Request $request, Child $child)
+    {
+        $request->validate([
+            'price' => 'required|numeric|min:0'
+        ]);
+
+        ChildMonthlyPrice::updateOrCreate(
+            [
+                'child_id' => $child->id,
+            ],
+            ['price' => $request->price]
+        );
+
+        return redirect()->back()
+            ->with('success', 'Price added successfully for ' . $child->name);
     }
 
     /**

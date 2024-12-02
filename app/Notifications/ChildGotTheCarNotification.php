@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class TripEndedNotification extends Notification
+class ChildGotTheCarNotification extends Notification
 {
     use Queueable;
 
@@ -27,9 +27,9 @@ class TripEndedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'message' => "رحلة الطفل " . $this->child->name . " بامان قد انتهت",
+            'message' => "طفلك {$this->child->name} قد وصل السيارة",
             'child_id' => $this->child->id,
-            'type' => 'trip_ended'
+            'type' => 'child_got_in_car'
         ];
     }
 }

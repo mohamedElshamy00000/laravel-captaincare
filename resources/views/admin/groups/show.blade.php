@@ -113,6 +113,7 @@
                           <th scope="col"><i class="dripicons-user-id font-size-20 align-middle text-primary me-2"></i> Name</th>
                           <th scope="col"><i class="dripicons-archive font-size-20 align-middle text-primary me-2"></i> Class</th>
                           <th scope="col"><i class="mdi mdi-account-child-outline font-size-20 align-middle text-primary me-2"></i> Parents</th>
+                          <th scope="col"><i class="mdi mdi-sort-numeric-ascending-variant font-size-20 align-middle text-primary me-2"></i> Price</th>
                           <th scope="col"><i class="mdi mdi-sort-numeric-ascending-variant font-size-20 align-middle text-primary me-2"></i> Age</th>
                           <th scope="col"><i class="mdi mdi-dots-horizontal font-size-20 align-middle text-primary"></i></th>
                         </tr>
@@ -143,8 +144,18 @@
                                 </div>
 
                             </td>
+                            <td>
+                                @if ($child->monthlyPrices->count() > 0)
+                                    {{ $child->monthlyPrices->first()->price }} EGP
+                                    {{-- edit btn --}}
+                                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#addPriceModal{{ $child->id }}">Edit</button>
+                                @else
+                                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#addPriceModal{{ $child->id }}">Add Price</button>
+                                @endif
+                            </td>
                             <td>{{ $child->age }} Year's</td>
                             <td>
+
                                 <form id="removeChildrenForm" action="{{ route('admin.groups.delete.child') }}" method="POST">
                                     @csrf
                                     @method('delete')
@@ -172,6 +183,9 @@
     </div>
 </div>
 
+@foreach ($group->children as $child)
+    @include('admin.groups.add-price-modal', ['child' => $child])
+@endforeach
 
 @endsection
 

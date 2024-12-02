@@ -12,25 +12,25 @@
 
                 <!-- Advanced Search Form -->
                 <div class="mb-4">
-                    <form id="search-form" class="form-inline">
-                        <div class="form-group mr-2">
+                    <form id="search-form" class="form-inline row mb-5">
+                        <div class="form-group mr-2 col">
                             <label for="trip-date" class="mr-2">Trip Date</label>
                             <input type="date" class="form-control" id="trip-date" name="trip_date">
                         </div>
-                        <div class="form-group mr-2">
+                        <div class="form-group mr-2 col">
                             <label for="driver" class="mr-2">Driver</label>
                             <input type="text" class="form-control" id="driver" name="driver">
                         </div>
-                        <div class="form-group mr-2">
+                        <div class="form-group mr-2 col">
                             <label for="status" class="mr-2">Status</label>
-                            <select class="form-control" id="status" name="status">
+                            <select class="form-control" id="" name="status">
                                 <option value="">All</option>
                                 <option value="pending">Pending</option>
                                 <option value="completed">Completed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
                         </div>
-                        <div class="form-group mr-2">
+                        <div class="form-group mr-2 col">
                             <label for="trip-type" class="mr-2">Trip Type</label>
                             <select class="form-control" id="trip-type" name="trip_type">
                                 <option value="">All</option>
@@ -38,7 +38,7 @@
                                 <option value="round-trip">Round Trip</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Search</button>
+                        <button type="submit" class="btn btn-primary col mt-4">Search</button>
                     </form>
                 </div>
                 <!-- End Advanced Search Form -->
@@ -49,6 +49,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Trip Date</th>
+                                <th>Trip Time</th>
                                 <th>Description</th>
                                 <th>Driver</th>
                                 <th>Status</th>
@@ -86,6 +87,7 @@
             columns: [
                 { data: 'id', name: 'id' },
                 { data: 'trip_date', name: 'trip_date' },
+                { data: 'time', name: 'time' },
                 { data: 'description', name: 'description' },
                 { data: 'driver_id', name: 'driver_id' },
                 { data: 'status', name: 'status' },

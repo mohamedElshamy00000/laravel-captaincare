@@ -43,7 +43,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth']], 
     // Route::get('school-create-group/{id}',    [GroupController::class, 'create'])->name('school.create.group');
     Route::post('school-store-group',    [GroupController::class, 'store'])->name('school.store.group');
     Route::get('/Schools/{id}/groups', [SchoolController::class, 'getGroups'])->name('school.get.groups');
-
+    Route::post('children/{child}/store-price', [ChildrenController::class, 'storePrice'])->name('children.store-price');
     // school holiday
     Route::get('/school-holidays-all/{id}', [HolidayController::class, 'schoolHolidays'])->name('school.holiday.index');
     Route::get('/school-holiday-create/{id}', [HolidayController::class, 'create'])->name('school.holiday.create');

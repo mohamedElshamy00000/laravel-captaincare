@@ -23,4 +23,9 @@ class Trip extends Model
     {
         return $this->belongsTo(Driver::class);
     }
+
+    public function schoolClass()
+    {
+        return $this->belongsTo(SchoolClass::class);
+    }
 }

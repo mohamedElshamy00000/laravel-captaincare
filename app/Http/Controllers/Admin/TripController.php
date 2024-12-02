@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trip;
+use Carbon\Carbon;
 class TripController extends Controller
 {
     public function index()
@@ -26,6 +27,10 @@ class TripController extends Controller
             })
             ->editColumn('trip_date', function ($trip) {
                 return $trip->trip_date;
+            })
+            ->editColumn('time', function ($trip) {
+                $time = Carbon::parse($trip->time)->format('h:i A');
+                return $time;
             })
             ->editColumn('description', function ($trip) {
                 return $trip->description;

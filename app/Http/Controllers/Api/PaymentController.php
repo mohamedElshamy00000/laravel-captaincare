@@ -8,7 +8,7 @@ use App\Services\PaymobService;
 use App\Models\SubscriptionInvoice;
 use App\Http\Controllers\Controller;
 use Creatydev\Plans\Models\PlanModel;
-
+use Illuminate\Support\Facades\Log;
 class PaymentController extends Controller
 {
     protected $paymobService;
@@ -50,11 +50,16 @@ class PaymentController extends Controller
             return response()->json(['payment_key' => $paymentKey['token'], 'iframe_id' => config('services.paymob.iframe_id')]);
 
         } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            \Log::error('Error initiating payment: ' . $e->getMessage());
+            Log::error('Payment initiation failed', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+                'amount' => $request->amount
+            ]);
 
-            // Return an error response to the client
-            return response()->json(['error' => 'Failed to initiate payment. Please try again later.'], 500);
+            return response()->json([
+                'error' => 'Failed to initiate payment',
+                'message' => config('app.debug') ? $e->getMessage() : 'Please try again later'
+            ], 500);
         }
     }
 
@@ -69,9 +74,19 @@ class PaymentController extends Controller
         // Extract relevant data from the request
         $paymentStatus = $request->input('success');
         $orderId = $request->input('id');
-        // dd($request->all());
+
+        if (!$orderId) {
+            return response()->json(['message' => 'Invalid order ID'], 400);
+        }
 
         if ($request->input('success') == true) {
+
+            $invoice = SubscriptionInvoice::where('transaction_id', $orderId)->first();
+            // dd($invoice);
+            if (!$invoice) {
+                return response()->json(['message' => 'Invoice not found'], 404);
+            }
+
             // Update order status, send confirmation emails, etc.
             $invoice = SubscriptionInvoice::where('transaction_id', $orderId)->first();
             $invoice->update([
@@ -94,8 +109,8 @@ class PaymentController extends Controller
 
         } elseif ($request->input('success') == false) {
             // Handle failed payments or other statuses
-            
-            
+
+
             $invoice = SubscriptionInvoice::where('transaction_id', $orderId)->update([
                 'payment_way' => $request->source_data_sub_type ?? $request->source_data_type,
                 'updated_at' => $request->updated_at,
@@ -108,10 +123,7 @@ class PaymentController extends Controller
                 'status' => $paymentStatus,
             ], 400); // You can customize the HTTP status code as needed
         } else {
-            // Send a response indicating failure
-            return response()->json([
-                'message' => 'error',
-            ], 500); // You can customize the HTTP status code as needed
+            return response()->json(['message' => 'Error processing payment response'], 500);
         }
     }
 }

@@ -119,6 +119,8 @@ class InvoicesController extends Controller
             'amount' => 'required|integer',
             'plan_id' => 'required|integer',
             'user_id' => 'required|exists:fathers,id',
+            'status' => 'required|integer',
+            'due_date' => 'required|date',
             'child_id' => 'required|exists:children,id',
         ]);
 
@@ -129,7 +131,8 @@ class InvoicesController extends Controller
                 'amount' => $request->amount,
                 'plan_id' => $request->plan_id,
                 'user_id' => $request->user_id,
-                'child_id' => $request->child_id
+                'child_id' => $request->child_id,
+                'status' => $request->status
             ]);
 
             return redirect()->route('admin.subscription.invoices')->with('success', 'Invoice updated successfully.');

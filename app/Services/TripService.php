@@ -9,6 +9,7 @@ use App\Models\SchoolHoliday;
 use App\Models\SchoolSemster;
 use App\Models\OfficialHoliday;
 use App\Models\Trip;
+
 class TripService
 {
     /**
@@ -28,8 +29,7 @@ class TripService
         $semesters = SchoolSemster::where('school_id', $group->school_id)
                                     ->where('status', 1) // الفصول الدراسية النشطة
                                     ->get();
-
-         // الحصول على العطلات الخاصة بالمدرسة
+        // الحصول على العطلات الخاصة بالمدرسة
         $schoolHolidays = SchoolHoliday::where('school_id', $group->school_id)->get();
 
          // الحصول على العطلات العامة
@@ -38,8 +38,8 @@ class TripService
         $futureWeeklyTrips = [];
 
         foreach ($schoolClasses as $schoolClass) {
-            $entryTime = Carbon::createFromFormat('g:i a', $schoolClass->entry_time);
-            $checkOutTime = Carbon::createFromFormat('g:i a', $schoolClass->check_out);
+            $entryTime = Carbon::createFromFormat('H:i', $schoolClass->entry_time);
+            $checkOutTime = Carbon::createFromFormat('H:i', $schoolClass->check_out);
 
             foreach ($semesters as $semester) {
                 if ($currentDate->between($semester->study_start, $semester->study_end) ||
@@ -137,7 +137,6 @@ class TripService
 
     public function storeTrip($group, $status)
     {
-
         try {
             // Validate the group and status
             if (!$group || !$status) {
@@ -149,23 +148,46 @@ class TripService
                 throw new \Exception('Invalid driver_id');
             }
 
+            $currentTime = Carbon::now();
+            $morningStart = Carbon::createFromTimeString('01:00');
+            $morningEnd = Carbon::createFromTimeString('09:00');
+            $afternoonEnd = Carbon::createFromTimeString('20:00');
+
+            if ($currentTime->between($morningStart, $morningEnd)) {
+                $trip_type = 'morning';
+            } elseif ($currentTime->between($morningEnd, $afternoonEnd)) {
+                $trip_type = 'afternoon';
+            } else {
+                $trip_type = 'other';
+            }
+            // dd($trip_type);
+
             $trip = Trip::create([
                 'group_id' => $group->id,
                 'status' => $status,
                 'driver_id' => $group->driver_id,
                 'trip_date' => Carbon::now()->toDateString(),
                 'time' => Carbon::now()->toTimeString(),
-                'description' => 'Trip description', // Add a default description
-                'trip_type' => 'morning', // Add a default trip type
-                'in_exam_period' => false, // Add a default value for in_exam_period
-                'school_class_id' => $group->school_class_id, // Add school_class_id
+                'description' => '',
+                'trip_type' => $trip_type,
+                'in_exam_period' => false,
+                'school_class_id' => $group->school_class_id,
             ]);
 
-        } catch (\Exception $e) {
-            // Handle the exception
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+            return response()->json([
+                'status' => true,
+                'message' => 'Trip started successfully',
+                'data' => [
+                    'trip' => $trip->load(['group', 'driver', 'schoolClass'])->toArray()
+                ]
+            ], 200);
 
-        return $trip;
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+                'data' => null
+            ], 400);
+        }
     }
 }

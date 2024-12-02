@@ -16,7 +16,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Models\SubscriptionInvoice;
-
+use App\Models\User;
+use App\Notifications\NewUserNotification;
+use Illuminate\Support\Facades\Notification;
 class AuthController extends Controller
 {
 
@@ -32,8 +34,7 @@ class AuthController extends Controller
             'Longitude' => 'nullable',
             'email' => 'nullable|string|email|max:255|unique:fathers,email',
             'password' => 'required|string|min:6|confirmed',
-            // 'children' => 'required|array',
-            // 'children.*' => 'exists:children,id'
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Check if validation fails
@@ -45,22 +46,33 @@ class AuthController extends Controller
 
         try {
 
+            // if ($request->hasFile('photo')) {
+            //     $file = $request->file('photo');
+            //     $filename = time() . '.' . $file->getClientOriginalExtension();
+            //     $file->move(public_path("/assets/files/fathers/"), $filename);
+            //     $photoPath = $filename;
+            // }
+
             $father = Father::create([
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'state' => $request->state ?? 'Unknown',
                 'city' => $request->city ?? 'Unknown',
-                'Latitude' => $request->Latitude,
-                'Longitude' => $request->Longitude,
+                'Latitude' => $request->Latitude ?? null,
+                'Longitude' => $request->Longitude ?? null,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                // 'photo' => $photoPath ?? null,
             ]);
 
             // Attach children to father
-            // $father->children()->sync($request->children);
+            $father->children()->sync($request->children);
 
             // Generate JWT token
             $token = JWTAuth::fromUser($father);
+
+            $admin = User::role('admin')->first();
+            Notification::send($admin, new NewUserNotification($father));
 
             return response()->json([
                 'message' => 'Successfully registered',
@@ -141,18 +153,22 @@ class AuthController extends Controller
     // Driver Registration
     public function registerDriver(Request $request)
     {
-        $this->validate($request, [
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:drivers',
-            'license' => 'required|string|max:255',
-            'password' => 'required|string|min:6|confirmed',
-            'address' => 'required|max:255',
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'Latitude' => 'nullable',
-            'Longitude' => 'nullable',
 
-        ]);
+        try {
+            $this->validate($request, [
+                'name' => 'required|string|max:255',
+                'phone' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:drivers',
+                'license' => 'required|string|max:255',
+                'password' => 'required|string|min:6|confirmed',
+                'address' => 'required|max:255',
+                'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'Latitude' => 'nullable',
+                'Longitude' => 'nullable',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->validator->errors()], 422); // Return validation errors
+        }
 
         // Store the photo
 
@@ -174,7 +190,7 @@ class AuthController extends Controller
             'Latitude' => $request->Latitude,
             'Longitude' => $request->Longitude,
             'status' => $request->status,
-            'photo' => $photoPath,
+            'photo' => $photoPath ?? null,
             'password' => Hash::make($request->password),
         ]);
 
@@ -191,51 +207,14 @@ class AuthController extends Controller
     // Father Login
     public function fatherLogin(Request $request)
     {
-        // dd($request->all());
         try {
-
-            // Validate incoming request
             $credentials = $request->only('email', 'password');
-
-            // Attempt to log the user in
             if (!$token = Auth::guard('father')->attempt($credentials)) {
-                return response()->json(['error' => 'Invalid credentials'], 400);
+                return response()->json(['error' => 'بيانات الاعتماد غير صالحة'], 400);
             }
 
-            // Retrieve the authenticated father and their children
-            $father = Father::with('children')->find(auth('father')->id());
-            $children = $father->children;
-
-            // Fetch the groups that contain these children
-            $groups = Group::whereHas('children', function ($query) use ($children) {
-                // Use 'children.id' to remove ambiguity
-                $query->whereIn('children.id', $children->pluck('id'));
-            })->with('school', 'driver', 'schoolClass')->get();
-
-            // Prepare child data with associated groups
-            $childData = $children->map(function ($child) use ($groups) {
-                return [
-                    'id' => $child->id,
-                    'name' => $child->name,
-                    'groups' => $groups->filter(function ($group) use ($child) {
-                        return $group->children->contains('id', $child->id);
-                    })->map(function ($group) {
-                        return [
-                            'id' => $group->id,
-                            'name' => $group->name,
-                        ];
-                    }),
-                ];
-            })->toArray();
-
-            // Return the JSON response with the token and father's details
             return response()->json([
-                'token' => $token,
-                'father' => [
-                    'id' => $father->id,
-                    'name' => $father->name,
-                    'children' => $childData,
-                ],
+                'token' => $token
             ]);
 
         } catch (JWTException $e) {
@@ -243,31 +222,19 @@ class AuthController extends Controller
         }
     }
 
-
-    // public function fatherLogin(Request $request)
-    // {
-    //     $credentials = $request->only('email', 'password');
-
-    //     try {
-    //         if (!$token = Auth::guard('father')->attempt($credentials)) {
-    //             return response()->json(['error' => 'Invalid credentials'], 400);
-    //         }
-    //     } catch (JWTException $e) {
-    //         return response()->json(['error' => 'Could not create token'], 500);
-    //     }
-
-    //     return response()->json(compact('token'));
-    // }
-
     // Driver Login
     public function driverLogin(Request $request)
     {
-        $credentials = $request->only('email', 'password');
-
         try {
+            $credentials = $request->only('email', 'password');
+
             if (!$token = Auth::guard('driver')->attempt($credentials)) {
-                return response()->json(['error' => 'Invalid credentials'], 400);
+                return response()->json(['error' => 'بيانات الاعتماد غير صالحة'], 400);
             }
+
+            return response()->json([
+                'token' => $token
+            ]);
         } catch (JWTException $e) {
             return response()->json(['error' => 'Could not create token'], 500);
         }
@@ -278,73 +245,66 @@ class AuthController extends Controller
     // Get Authenticated Father
     public function meFather()
     {
-        $father = auth('father')->user();
+        try {
+            $father = auth('father')->user()->load([
+                'children.school',
+                'children.groupChildren.group.driver',
+            ]);
 
-        // Check if the father is authenticated
-        if (!$father) {
-            return response()->json(['message' => 'Unauthorized: Father not authenticated.'], 401);
+            return response()->json([
+                'status' => true,
+                'message' => 'Father data retrieved successfully',
+                'data' => [
+                    'id' => $father->id,
+                    'name' => $father->name,
+                    'phone' => $father->phone,
+                    'email' => $father->email,
+                    'status' => $father->status,
+                    'location' => [
+                        'latitude' => $father->Latitude,
+                        'longitude' => $father->Longitude,
+                    ],
+                    'children' => $father->children->map(function ($child) {
+                        return [
+                            'id' => $child->id,
+                            'name' => $child->name,
+                            'age' => $child->age,
+                            'phone' => $child->phone,
+                            'photo' => $child->photo ? asset('assets/files/children/' . $child->photo) : null,
+                            'location' => [
+                                'address' => $child->address,
+                                'latitude' => $child->Latitude,
+                                'longitude' => $child->Longitude,
+                            ],
+                            'school' => [
+                                'id' => $child->school_id,
+                                'name' => $child->school->name ?? null,
+                                'class_id' => $child->school_class_id,
+                            ],
+                            'groups' => $child->groupChildren->map(function ($groupChild) {
+                                $group = $groupChild->group;
+                                return [
+                                    'id' => $group->id,
+                                    'name' => $group->name,
+                                    'status' => $groupChild->status,
+                                    'driver' => $group->driver ? [
+                                        'id' => $group->driver->id,
+                                        'name' => $group->driver->name,
+                                        'phone' => $group->driver->phone,
+                                    ] : null
+                                ];
+                            })
+                        ];
+                    })
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve father data',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Load the father's children and their associated groups
-        $children = $father->children;
-
-        // Fetch the groups that contain these children
-        $groups = Group::whereHas('children', function ($query) use ($children) {
-            // Use 'children.id' to remove ambiguity
-            $query->whereIn('children.id', $children->pluck('id'));
-        })->with('school', 'driver', 'schoolClass')->get();
-
-        // Fetch the invoices associated with these children
-        $invoices = SubscriptionInvoice::whereIn('child_id', $children->pluck('id'))->get();
-
-        // Prepare the response data
-        $childData = $children->map(function ($child) use ($groups, $invoices) {
-            // Get the invoices related to the current child
-            $childInvoices = $invoices->filter(function ($invoice) use ($child) {
-                return $invoice->child_id == $child->id;
-            })->map(function ($invoice) {
-                return [
-                    'id' => $invoice->id,
-                    'amount' => $invoice->amount,
-                    'due_date' => $invoice->due_date,
-                    'comment' => $invoice->plan->comment,
-                    'status' => $invoice->status ? 'paid' : 'unpaid' ,
-                ];
-            });
-
-            return [
-                'id' => $child->id,
-                'name' => $child->name,
-                'age' => $child->age,
-                'phone' => $child->phone,
-                'address' => $child->address,
-                'latitude' => $child->Latitude,
-                'longitude' => $child->Longitude,
-                'school_id' => $child->school_id,
-                'school_class_id' => $child->school_class_id,
-                'photo' => $child->photo, // Include the child's photo path
-                'groups' => $groups->filter(function ($group) use ($child) {
-                    return $group->children->contains('id', $child->id);
-                })->map(function ($group) {
-                    return [
-                        'id' => $group->id,
-                        'name' => $group->name,
-                    ];
-                }),
-                'invoices' => $childInvoices, // Add invoices for the child
-            ];
-        })->toArray();
-
-        // Return the JSON response with father's details, children with groups and invoices
-        return response()->json([
-            'id' => $father->id,
-            'name' => $father->name,
-            'phone' => $father->phone,
-            'status' => $father->status,
-            'latitude' => $father->Latitude,
-            'longitude' => $father->Longitude,
-            'children' => $childData,
-        ]);
     }
 
 
@@ -352,7 +312,38 @@ class AuthController extends Controller
     // Get Authenticated Driver
     public function meDriver()
     {
-        return response()->json(auth('driver')->user());
+        try {
+            $driver = auth('driver')->user();
+
+            return response()->json([
+                'data' => [
+                    'id' => $driver->id,
+                    'name' => $driver->name,
+                    'phone' => $driver->phone,
+                    'status' => $driver->status,
+                    'photo' => $driver->photo ? url('assets/files/drivers/'. $driver->photo ) : null,
+                    'location' => [
+                        'latitude' => $driver->Latitude,
+                        'longitude' => $driver->Longitude,
+                    ],
+                    'cars' => $driver->cars->map(function ($car) {
+                        return [
+                            'id' => $car->id,
+                            'model' => $car->model,
+                            'year' => date('Y', strtotime($car->make)),
+                            'license' => $car->license ? url('assets/files/drivers/car'. $car->license ) : null,
+                            'photo' => $car->photo ? url('assets/files/drivers/car'. $car->photo ) : null,
+                        ];
+                    })
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve father data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Father Logout
@@ -367,5 +358,154 @@ class AuthController extends Controller
     {
         auth('driver')->logout();
         return response()->json(['message' => 'Successfully logged out']);
+    }
+
+    public function updateFather(Request $request) {
+        $father = auth('father')->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'string|max:255',
+            'phone' => 'string',
+            'state' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'Latitude' => 'nullable',
+            'Longitude' => 'nullable',
+            'email' => 'nullable|string|email|max:255|unique:fathers,email,'.$father->id,
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            if ($request->hasFile('photo')) {
+                // حذف الصورة القديمة إذا كانت موجودة
+                if ($father->photo != 'avatar.png') {
+                    $oldPhotoPath = public_path("/assets/files/fathers/") . $father->photo;
+                    if (file_exists($oldPhotoPath)) {
+                        unlink($oldPhotoPath);
+                    }
+                }
+
+                $file = $request->file('photo');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path("/assets/files/fathers/"), $filename);
+                $father->photo = $filename;
+            }
+
+            $father->fill($request->only([
+                'name', 'phone', 'state', 'city', 'Latitude', 'Longitude', 'email'
+            ]));
+
+            $father->save();
+
+            return response()->json([
+                'message' => 'تم تحديث البيانات بنجاح',
+                'father' => $father
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'فشل تحديث البيانات'], 500);
+        }
+    }
+
+    public function changePassword(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string|min:6|confirmed',
+            'current_password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $father = auth('father')->user();
+
+        if (!Hash::check($request->current_password, $father->password)) {
+            return response()->json(['error' => 'كلمة المرور الحالية غير صحيحة'], 400);
+        }
+
+        try {
+            $father->password = Hash::make($request->password);
+            $father->save();
+
+            return response()->json(['message' => 'تم تغيير كلمة المرور بنجاح']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'فشل تغيير كلمة المرور'], 500);
+        }
+    }
+
+    public function updateDriver(Request $request) {
+        $driver = auth('driver')->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'string|max:255',
+            'phone' => 'string',
+            'address' => 'nullable|string|max:255',
+            'Latitude' => 'nullable',
+            'Longitude' => 'nullable',
+            'email' => 'nullable|string|email|max:255|unique:drivers,email,'.$driver->id,
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            if ($request->hasFile('photo')) {
+                // حذف الصورة القديمة إذا كانت موجودة
+                if ($driver->photo != 'avatar.png') {
+                    $oldPhotoPath = public_path("/assets/files/drivers/") . $driver->photo;
+                    if (file_exists($oldPhotoPath)) {
+                        unlink($oldPhotoPath);
+                    }
+                }
+
+                $file = $request->file('photo');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path("/assets/files/drivers/"), $filename);
+                $driver->photo = $filename;
+            }
+
+            $driver->fill($request->only([
+                'name', 'phone', 'address', 'Latitude', 'Longitude', 'email'
+            ]));
+
+            $driver->save();
+
+            return response()->json([
+                'message' => 'تم تحديث البيانات بنجاح',
+                'driver' => $driver
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'فشل تحديث البيانات'], 500);
+        }
+    }
+
+    public function changePasswordDriver(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $driver = auth('driver')->user();
+
+        if (!Hash::check($request->current_password, $driver->password)) {
+            return response()->json(['error' => 'كلمة المرور الحالية غير صحيحة'], 400);
+        }
+
+        try {
+            $driver->password = Hash::make($request->password);
+            $driver->save();
+
+            return response()->json(['message' => 'تم تغيير كلمة المرور بنجاح']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'فشل تغيير كلمة المرور'], 500);
+        }
     }
 }
