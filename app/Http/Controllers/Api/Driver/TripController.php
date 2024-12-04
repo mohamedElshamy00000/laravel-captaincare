@@ -144,7 +144,6 @@ class TripController extends Controller
                     'car' => $firstCar ? $firstCar->toArray() : null,
                 ],
                 'group' => $group,
-                'children' => $children
             ], 200);
 
         } catch (\Exception $e) {
