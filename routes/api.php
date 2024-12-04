@@ -148,7 +148,7 @@ Route::prefix('driver')->group(function () {
         Route::get('/group/{id}', [GroupController::class, 'getGroupDetails']);
         // trips
         Route::get('/trips', [DriverTripController::class, 'getDriverTrips']);
-
+        Route::get('/trips/details/{id}', [DriverTripController::class, 'tripDetails']);
         Route::post('/trip/{group_id}/start', [DriverTripController::class, 'startTrip']);
         Route::post('/trip/{group_id}/end', [DriverTripController::class, 'endTrip']);
         Route::post('/child/{child_id}/got-in-car', [DriverTripController::class, 'childGotInCar']);

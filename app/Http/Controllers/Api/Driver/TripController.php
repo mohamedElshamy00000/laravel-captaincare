@@ -99,6 +99,68 @@ class TripController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    public function tripDetails($trip_id)
+    {
+        try {
+            // Authenticate the driver using JWT
+            $driver = auth()->guard('driver')->user();
+
+            if (!$driver) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            // Retrieve the trip
+            $trip = Trip::where('id', $trip_id)->first();
+
+            if (!$trip) {
+                return response()->json(['message' => 'Trip not found'], 404);
+            }
+
+            // Retrieve the group associated with the trip
+            $group = Group::find($trip->group_id);
+
+            if (!$group) {
+                return response()->json(['message' => 'Group not found'], 404);
+            }
+
+            // Retrieve the children associated with the group
+            $children = $group->children;
+
+            // Retrieve the driver's first car
+            $firstCar = $driver->cars()->first();
+
+            // Return the driver, group, and children information, excluding specific fields
+            return response()->json([
+                'driver' => [
+                    'id' => $driver->id,
+                    'name' => $driver->name,
+                    'phone' => $driver->phone,
+                    'photo' => asset('storage/' . $driver->photo),
+                    'license' => $driver->license,
+                    'status' => $driver->status,
+                    'address' =>$driver->address,
+                    'Latitude' => $driver->Latitude,
+                    'Longitude' => $driver->Longitude,
+                    'car' => $firstCar ? $firstCar->toArray() : null,
+                ],
+                'group' => $group,
+                'children' => $children
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while retrieving trips.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Get planned trips for a driver based on their assigned groups.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getDriverTrips()
     {
         try {

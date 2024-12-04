@@ -232,14 +232,15 @@ class AuthController extends Controller
                 return response()->json(['error' => 'بيانات الاعتماد غير صالحة'], 400);
             }
 
+            $driver = Auth::guard('driver')->user();
+
             return response()->json([
+                'user_id' => $driver->id,
                 'token' => $token
             ]);
         } catch (JWTException $e) {
             return response()->json(['error' => 'Could not create token'], 500);
         }
-
-        return response()->json(compact('token'));
     }
 
     // Get Authenticated Father
