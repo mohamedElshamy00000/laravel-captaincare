@@ -115,6 +115,8 @@ class GroupController extends Controller
                         'id' => $child->id,
                         'name' => $child->name,
                         'phone' => $child->phone,
+                        'latitude' => $child->Latitude,
+                        'longitude' => $child->Longitude,
                         'photo' => $child->photo ? asset('assets/files/children/' . $child->photo) : null,
                     ];
                 }),

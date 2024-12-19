@@ -119,6 +119,8 @@ class FatherController extends Controller
                                 return [
                                     'id' => $child->id,
                                     'name' => $child->name,
+                                    'latitude' => $child->Latitude,
+                                    'longitude' => $child->Longitude,
                                     'photo' => $child->photo ? asset('assets/files/children/' . $child->photo) : null,
                                 ];
                             }),
@@ -187,6 +189,8 @@ class FatherController extends Controller
                     return [
                         'id' => $child->id,
                         'name' => $child->name,
+                        'latitude' => $child->Latitude,
+                        'longitude' => $child->Longitude,
                         'photo' => $child->photo ? asset('assets/files/children/' . $child->photo) : null,
                     ];
                 }),

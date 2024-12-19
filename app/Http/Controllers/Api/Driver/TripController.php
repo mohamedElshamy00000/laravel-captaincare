@@ -378,6 +378,8 @@ class TripController extends Controller
             'message' => 'Notification sent successfully',
             'child_id' => $child->id,
             'child_name' => $child->name,
+            'child_latitude' => $child->Latitude,
+            'child_longitude' => $child->Longitude,
             'father_id' => $parent->id,
             'message' => 'طفلك ' . $child->name . ' قد وصل السيارة',
         ], 200);
